@@ -41,7 +41,7 @@ public class Xls03Test {
         //camlData.setAEst("test3");
         //camlData.setTEST("test4");
 
-        BeanMap beanMap = BeanMapUtils.create(camlData);
+        BeanMap beanMap = BeanMap.create(BeanMapUtils.create(camlData));
 
         LOGGER.info("test:{}", beanMap.get("test"));
         LOGGER.info("test:{}", beanMap.get("Test"));
