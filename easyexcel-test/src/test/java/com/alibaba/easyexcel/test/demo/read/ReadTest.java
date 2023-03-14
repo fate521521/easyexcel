@@ -102,6 +102,13 @@ public class ReadTest {
         // 写法4
         fileName = TestFileUtil.getPath() + "demo" + File.separator + "demo.xlsx";
         // 一个文件一个reader
+        /**
+         * 构建卓越的阅读
+         * 参数：
+         * pathName – 要读取的文件路径。 head – 为类注释配置信息。 readListener – 读取侦听器。
+         * 返回：
+         * Excel 阅读器生成器。
+         */
         try (ExcelReader excelReader = EasyExcel.read(fileName, DemoData.class, new DemoDataListener()).build()) {
             // 构建一个sheet 这里可以指定名字或者no
             ReadSheet readSheet = EasyExcel.readSheet(0).build();

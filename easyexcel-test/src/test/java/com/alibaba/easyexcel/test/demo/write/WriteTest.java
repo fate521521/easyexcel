@@ -2,7 +2,10 @@ package com.alibaba.easyexcel.test.demo.write;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -49,6 +52,8 @@ import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static com.alibaba.excel.EasyExcelFactory.write;
+
 /**
  * 写的常见写法
  *
@@ -57,6 +62,47 @@ import org.junit.Test;
 @Ignore
 public class WriteTest {
 
+    /**
+     * excel设置单元格格式，背景颜色及大小
+     */
+    @Test
+    public void fateTest(){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String transformDate = simpleDateFormat.format(new Date());
+        String fileName = "fate樱花" + transformDate;
+        try {
+            fileName = URLEncoder.encode(fileName, "UTF-8");
+            fileName = fileName + System.currentTimeMillis() + ".xlsx";
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        // 标题样式
+        WriteCellStyle headWriteCellStyle = EasyExcelUtils.getHeadStyle();
+        // 内容样式
+        WriteCellStyle contentWriteCellStyle = EasyExcelUtils.getContentStyle();
+        // 这个策略是 头是头的样式 内容是内容的样式 其他的策略可以自己实现
+        CustomHandler customHandler = new CustomHandler(headWriteCellStyle, contentWriteCellStyle);
+        write(fileName, DemoData.class)
+            //自动列宽，设置
+            .registerWriteHandler(new LongestMatchColumnWidthStyleStrategy())
+            .registerWriteHandler(customHandler)
+            .sheet("信息").doWrite(fateData());
+    }
+
+
+    private List<DemoData> fateData() {
+        List<DemoData> list = ListUtils.newArrayList();
+        for (int i = 0; i < 10; i++) {
+            DemoData data = new DemoData();
+            data.setString("字符串" + i);
+            data.setDate(new Date());
+            data.setDoubleData(0.56);
+//            data.setSexEnum(i % 2 == 0 ? SexEnum.WOMEN:SexEnum.MAN);
+            data.setTest("55");
+            list.add(data);
+        }
+        return list;
+    }
     /**
      * 最简单的写
      * <p>
@@ -138,9 +184,13 @@ public class WriteTest {
      */
     @Test
     public void indexWrite() {
+        System.out.println(" = 开始解析数据" );
         String fileName = TestFileUtil.getPath() + "indexWrite" + System.currentTimeMillis() + ".xlsx";
         // 这里 需要指定写用哪个class去写，然后写到第一个sheet，名字为模板 然后文件流会自动关闭
-        EasyExcel.write(fileName, IndexData.class).sheet("模板").doWrite(data());
+        EasyExcel.write(fileName, IndexData.class)
+//            .registerWriteHandler(new AddNoHandler())
+            .sheet("模板")
+            .doWrite(data());
     }
 
     /**
@@ -355,14 +405,18 @@ public class WriteTest {
 
         // 设置单个单元格的样式 当然样式 很多的话 也可以用注解等方式。
         WriteCellData<String> writeCellStyle = new WriteCellData<>("单元格样式");
+        //WriteCellData继承了CellData 设置单元格类型
         writeCellStyle.setType(CellDataTypeEnum.STRING);
+
         writeCellDemoData.setWriteCellStyle(writeCellStyle);
+        //当写入的时候单元格格式
         WriteCellStyle writeCellStyleData = new WriteCellStyle();
+        //单元格样式
         writeCellStyle.setWriteCellStyle(writeCellStyleData);
         // 这里需要指定 FillPatternType 为FillPatternType.SOLID_FOREGROUND 不然无法显示背景颜色.
-        writeCellStyleData.setFillPatternType(FillPatternType.SOLID_FOREGROUND);
+        writeCellStyleData.setFillPatternType(FillPatternType.FINE_DOTS);
         // 背景绿色
-        writeCellStyleData.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+        writeCellStyleData.setFillForegroundColor(IndexedColors.RED.getIndex());
 
         // 设置单个单元格多种样式
         // 这里需要设置 inMomery=true 不然会导致无法展示单个单元格多种样式，所以慎用
@@ -374,7 +428,9 @@ public class WriteTest {
         richTextStringData.setTextString("红色绿色默认");
         // 前2个字红色
         WriteFont writeFont = new WriteFont();
+        //要使用的字体
         writeFont.setColor(IndexedColors.RED.getIndex());
+        //设置间隔字体的字体样式 RichTextStringData 实体类中有WriteFont类
         richTextStringData.applyFont(0, 2, writeFont);
         // 接下来2个字绿色
         writeFont = new WriteFont();
@@ -659,6 +715,17 @@ public class WriteTest {
     }
 
     /**
+     * fate test拦截器
+     */
+    @Test
+    public void fateCustomHandlerWrite() {
+        String fileName = TestFileUtil.getPath() + "fateCustomHandlerWrite" + System.currentTimeMillis() + ".xlsx";
+        // 这里 需要指定写用哪个class去写，然后写到第一个sheet，名字为模板 然后文件流会自动关闭
+        EasyExcel.write(fileName, DemoData.class)
+            .registerWriteHandler(new FateStatusCustomCellWriteHandler()).sheet("模板").doWrite(data());
+    }
+
+    /**
      * 插入批注
      * <p>
      * 1. 创建excel对应的实体对象 参照{@link DemoData}
@@ -762,7 +829,11 @@ public class WriteTest {
             DemoData data = new DemoData();
             data.setString("字符串" + i);
             data.setDate(new Date());
-            data.setDoubleData(0.56);
+            data.setDoubleData(56.0 + i);
+//            data.setSexEnum(i % 2 == 0 ? SexEnum.WOMEN:SexEnum.MAN);
+            int sum = 58 + i;
+            data.setTest(String.valueOf(sum));
+            data.setStatus( i % 2 == 0 ?"正常":"异常");
             list.add(data);
         }
         return list;
